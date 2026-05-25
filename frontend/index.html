@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoteNest - CSE Question Bank</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+    <!-- PAGE LOADER -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <p class="loader-text"><i class="fas fa-paper-plane"></i> Note<span>Nest</span></p>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo"><a onclick="showHome()"><i class="fas fa-paper-plane"></i> Note<span>Nest</span></a></div>
+            <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="nav-links" id="navLinks">
+                <a onclick="navClick(showHome)" id="homeNavLink">Home</a>
+                <a onclick="navClick(showDashboard)" id="dashboardNavLink" style="display:none;"><i class="fas fa-tachometer-alt"></i> <span id="dashboardNavText">Dashboard</span></a>
+                <a onclick="navClick(showSubjects)">Subjects</a>
+                <a onclick="navClick(showFaculty)">Faculty Info</a>
+                <a onclick="navClick(showQuestions)">Questions</a>
+                <a onclick="navClick(showAbout)">About</a>
+                <a onclick="navClick(showContact)">Contact Us</a>
+                <a onclick="navClick(logout)" id="logoutNavLinkMobile" class="mobile-only-link" style="display:none;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <div class="nav-auth-mobile" id="navAuthMobile">
+                    <button class="btn btn-outline" id="loginBtnMobile" onclick="navClick(() => { openModal(); showLoginForm(); })"><i class="fas fa-sign-in-alt"></i> Login</button>
+                    <button class="btn btn-primary" id="signupBtnMobile" onclick="navClick(() => { openModal(); showSignupForm(); })"><i class="fas fa-user-plus"></i> Sign Up</button>
+                </div>
+            </div>
+            <div class="auth-buttons" id="authButtonsDesktop">
+                <button class="btn btn-outline" id="loginBtn"><i class="fas fa-sign-in-alt"></i> Login</button>
+                <button class="btn btn-primary" id="signupBtn"><i class="fas fa-user-plus"></i> Sign Up</button>
+                <div class="user-profile" id="userProfile" style="display: none;">
+                    <i class="fas fa-user-circle"></i><span id="userName">User</span>
+                    <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HOME SECTION -->
+    <div id="homeSection" class="home-section">
+        <section class="hero">
+            <div class="container">
+                <h1><i class="fas fa-graduation-cap"></i> NoteNest Question Bank</h1>
+                <p>Your digital nest for CSE previous year questions â€” organized, accessible, and completely free.</p>
+                <div class="btn-group">
+                    <a onclick="showHome(); setTimeout(() => document.getElementById('subjectsSectionHome')?.scrollIntoView({behavior:'smooth'}), 100)"
+                        class="btn btn-primary"><i class="fas fa-book-open"></i> Browse by Subject</a>
+                    <a class="btn btn-outline"><i class="fas fa-calendar-alt"></i> Browse by Year</a>
+                </div>
+            </div>
+        </section>
+        <main class="container">
+            <h2 class="section-title">Why Choose NoteNest?</h2>
+            <div class="card-grid">
+                <div class="card"><i class="fas fa-database"></i>
+                    <h3>Extensive Collection</h3>
+                    <p>1000+ previous year question papers</p>
+                </div>
+                <div class="card"><i class="fas fa-search"></i>
+                    <h3>Smart Search</h3>
+                    <p>Filter by subject, year, or topic</p>
+                </div>
+                <div class="card"><i class="fas fa-download"></i>
+                    <h3>Free Downloads</h3>
+                    <p>All papers available in PDF format</p>
+                </div>
+                <div class="card"><i class="fas fa-mobile-alt"></i>
+                    <h3>Mobile Ready</h3>
+                    <p>Access on any device</p>
+                </div>
+            </div>
+            <h2 class="section-title" id="subjectsSectionHome">Popular Subjects</h2>
+            <div class="card-grid">
+                <div class="card" data-require-login="true"><i class="fas fa-code"></i>
+                    <h3>Data Structures</h3>
+                    <p>36 papers</p><span class="card-badge">Most Viewed</span>
+                </div>
+                <div class="card" data-require-login="true"><i class="fas fa-chart-line"></i>
+                    <h3>Algorithms</h3>
+                    <p>28 papers</p>
+                </div>
+                <div class="card" data-require-login="true"><i class="fas fa-database"></i>
+                    <h3>Database Systems</h3>
+                    <p>22 papers</p>
+                </div>
+                <div class="card" data-require-login="true"><i class="fas fa-terminal"></i>
+                    <h3>Operating System</h3>
+                    <p>19 papers</p>
+                </div>
+                <div class="card" data-require-login="true"><i class="fas fa-network-wired"></i>
+                    <h3>Computer Networks</h3>
+                    <p>25 papers</p>
+                </div>
+                <div class="card" data-require-login="true"><i class="fas fa-cubes"></i>
+                    <h3>OOP with Java</h3>
+                    <p>17 papers</p>
+                </div>
+            </div>
+            <div class="stats-container">
+                <div class="stat-item"><i class="fas fa-file-pdf"></i><span class="stat-number">1000+</span><span
+                        class="stat-label">Papers</span></div>
+                <div class="stat-item"><i class="fas fa-book"></i><span class="stat-number">15+</span><span
+                        class="stat-label">Subjects</span></div>
+                <div class="stat-item"><i class="fas fa-users"></i><span class="stat-number">5000+</span><span
+                        class="stat-label">Students</span></div>
+                <div class="stat-item"><i class="fas fa-download"></i><span class="stat-number">10K+</span><span
+                        class="stat-label">Downloads</span></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SUBJECTS SECTION -->
+    <div id="subjectsSection" class="subjects-section">
+        <div class="container">
+            <div class="subjects-hero">
+                <h1><i class="fas fa-book"></i> Semester Wise Courses</h1>
+                <p>Complete curriculum of CSE Department, IIUC</p>
+            </div>
+            <div id="subjectsContent"></div>
+        </div>
+    </div>
+
+    <!-- QUESTIONS SECTION -->
+    <div id="questionsSection" class="questions-section">
+        <div class="container">
+            <div class="questions-hero">
+                <h1><i class="fas fa-question-circle"></i> Previous Year Questions</h1>
+                <p>Select a semester to access previous year question papers</p>
+            </div>
+            <div id="questionsContent"></div>
+        </div>
+    </div>
+
+    <!-- FACULTY SECTION -->
+    <div id="facultySection" class="faculty-section">
+        <div class="container">
+            <div class="faculty-hero">
+                <h1><i class="fas fa-chalkboard-user"></i> Faculty Information</h1>
+                <p>Department of Computer Science and Engineering (CSE), IIUC</p>
+            </div>
+            <div id="facultyContent"></div>
+        </div>
+    </div>
+
+    <!-- ABOUT SECTION -->
+    <div id="aboutSection" class="about-section">
+        <div class="container">
+            <div class="about-hero">
+                <h1><i class="fas fa-info-circle"></i> About NoteNest</h1>
+                <p>Your digital nest for CSE previous year questions â€” organized, accessible, and completely free.</p>
+            </div>
+            <div class="mission-vision">
+                <div class="mv-card"><i class="fas fa-bullseye"></i>
+                    <h3>Our Mission</h3>
+                    <p>To empower CSE students by providing a centralized, free, and organized platform for accessing
+                        academic resources, previous year questions, and shared knowledge - making quality education
+                        accessible to everyone.</p>
+                </div>
+                <div class="mv-card"><i class="fas fa-eye"></i>
+                    <h3>Our Vision</h3>
+                    <p>To become the largest student-driven academic platform in Bangladesh where every CSE student of
+                        IIUC can find, share, and contribute to educational resources, fostering a collaborative
+                        learning community.</p>
+                </div>
+            </div>
+            <h2 class="section-title">What We Offer</h2>
+            <div class="features-grid">
+                <div class="feature-card"><i class="fas fa-file-alt"></i>
+                    <h4>Previous Year Questions</h4>
+                    <p>Organized by subject, year, and semester</p>
+                </div>
+                <div class="feature-card"><i class="fas fa-share-alt"></i>
+                    <h4>Notes Sharing</h4>
+                    <p>Students can upload and share their study notes</p>
+                </div>
+                <div class="feature-card"><i class="fas fa-users"></i>
+                    <h4>Community Driven</h4>
+                    <p>Everyone can contribute to help fellow students</p>
+                </div>
+                <div class="feature-card"><i class="fas fa-gem"></i>
+                    <h4>Completely Free</h4>
+                    <p>No hidden charges, education should be accessible</p>
+                </div>
+            </div>
+            <h2 class="section-title">Our Core Values</h2>
+            <div class="values-grid">
+                <div class="value-card"><i class="fas fa-universal-access"></i>
+                    <h4>Accessibility</h4>
+                    <p>Free resources for all students</p>
+                </div>
+                <div class="value-card"><i class="fas fa-handshake"></i>
+                    <h4>Collaboration</h4>
+                    <p>Sharing knowledge to grow together</p>
+                </div>
+                <div class="value-card"><i class="fas fa-star"></i>
+                    <h4>Quality</h4>
+                    <p>Verified and organized content</p>
+                </div>
+                <div class="value-card"><i class="fas fa-lightbulb"></i>
+                    <h4>Innovation</h4>
+                    <p>Using technology to simplify learning</p>
+                </div>
+            </div>
+            <h2 class="section-title">Meet Our Team</h2>
+            <div class="about-team">
+                <div class="about-team-card"><i class="fas fa-user-graduate"></i>
+                    <h4>Azra Sadia Bithi</h4>
+                    <p>C251246</p>
+                    <p style="color:var(--primary);">Founder & Developer</p>
+                </div>
+                <div class="about-team-card"><i class="fas fa-user-astronaut"></i>
+                    <h4>Eyenun Ilham Mawla</h4>
+                    <p>C251262</p>
+                    <p style="color:var(--primary);">Co-Founder & Developer</p>
+                </div>
+                <div class="about-team-card"><i class="fas fa-user-ninja"></i>
+                    <h4>Mustabira Muntaha Moomo</h4>
+                    <p>C251239</p>
+                    <p style="color:var(--primary);">Co-Founder & Developer</p>
+                </div>
+            </div>
+            <div class="contact-btn-container"><button class="btn btn-primary" onclick="showContact()"><i
+                        class="fas fa-envelope"></i> Contact Us</button></div>
+        </div>
+    </div>
+
+    <!-- CONTACT SECTION -->
+    <div id="contactSection" class="contact-section">
+        <div class="container">
+            <div class="contact-hero">
+                <h1><i class="fas fa-address-card"></i> Contact Us</h1>
+                <p>Feel free to reach out for any support, we will try our best to help you.</p>
+            </div>
+            <div class="support-message"><i class="fas fa-heart"></i>
+                <p><strong>NoteNest Support Team</strong> â€” We value your feedback and queries.</p>
+            </div>
+            <h2 class="section-title">Our Team</h2>
+            <div class="team-grid">
+                <div class="team-card"><i class="fas fa-user-graduate"></i>
+                    <h3>Azra Sadia Bithi</h3>
+                    <div class="student-id">C251246</div>
+                    <div class="contact-detail"><i class="fas fa-envelope"></i><a
+                            href="mailto:azrasadiabithi@gmail.com">azrasadiabithi@gmail.com</a></div>
+                </div>
+                <div class="team-card"><i class="fas fa-user-astronaut"></i>
+                    <h3>Eyenun Ilham Mawla</h3>
+                    <div class="student-id">C251262</div>
+                    <div class="contact-detail"><i class="fas fa-envelope"></i><a
+                            href="mailto:eyenin139@gmail.com">eyenin139@gmail.com</a></div>
+                </div>
+                <div class="team-card"><i class="fas fa-user-ninja"></i>
+                    <h3>Mustabira Muntaha Moomo</h3>
+                    <div class="student-id">C251239</div>
+                    <div class="contact-detail"><i class="fas fa-envelope"></i><a
+                            href="mailto:mustamunta@gmail.com">mustamunta@gmail.com</a></div>
+                </div>
+            </div>
+            <div class="iiuc-badge"><i class="fas fa-university"></i>
+                <h3>International Islamic University Chittagong (IIUC)</h3>
+                <p><i class="fas fa-map-marker-alt"></i> Kumira, Chattogram-4318, Bangladesh</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN DASHBOARD SECTION -->
+    <div id="adminSection" class="admin-section">
+        <div class="container">
+            <div class="dashboard-layout">
+                <aside class="dashboard-sidebar">
+                    <div class="sidebar-header"><i class="fas fa-shield-alt"></i>
+                        <h3>Admin Panel</h3>
+                    </div>
+                    <nav class="sidebar-nav">
+                        <a class="sidebar-link active" onclick="showAdminTab('overview')"><i
+                                class="fas fa-tachometer-alt"></i> Overview</a>
+                        <a class="sidebar-link" onclick="showAdminTab('questions')"><i class="fas fa-file-upload"></i>
+                            Upload Questions</a>
+                        <a class="sidebar-link" onclick="showAdminTab('faculty')"><i class="fas fa-users-cog"></i>
+                            Manage Faculty</a>
+                        <a class="sidebar-link" onclick="showAdminTab('users')"><i class="fas fa-user-shield"></i>
+                            Users</a>
+                    </nav>
+                </aside>
+                <main class="dashboard-content">
+                    <div id="adminOverview" class="dashboard-tab active-tab"></div>
+                    <div id="adminQuestions" class="dashboard-tab"></div>
+                    <div id="adminFaculty" class="dashboard-tab"></div>
+                    <div id="adminUsers" class="dashboard-tab"></div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- STUDENT DASHBOARD SECTION -->
+    <div id="studentSection" class="student-section">
+        <div class="container">
+            <div class="dashboard-layout">
+                <aside class="dashboard-sidebar student-sidebar">
+                    <div class="sidebar-header"><i class="fas fa-user-graduate"></i>
+                        <h3>My Dashboard</h3>
+                    </div>
+                    <nav class="sidebar-nav">
+                        <a class="sidebar-link active" onclick="showStudentTab('profile')"><i
+                                class="fas fa-id-card"></i> Profile</a>
+                        <a class="sidebar-link" onclick="showStudentTab('bookmarks')"><i class="fas fa-bookmark"></i>
+                            Bookmarks</a>
+                        <a class="sidebar-link" onclick="showStudentTab('history')"><i class="fas fa-history"></i>
+                            History</a>
+                    </nav>
+                </aside>
+                <main class="dashboard-content">
+                    <div id="studentProfile" class="dashboard-tab active-tab"></div>
+                    <div id="studentBookmarks" class="dashboard-tab"></div>
+                    <div id="studentHistory" class="dashboard-tab"></div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATIONS -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4><i class="fas fa-paper-plane"></i> NoteNest</h4>
+                <p>Your study companion for CSE excellence</p>
+                <div class="social-links"><a href="#"><i class="fab fa-facebook"></i></a><a href="#"><i
+                            class="fab fa-twitter"></i></a><a href="#"><i class="fab fa-linkedin"></i></a><a href="#"><i
+                            class="fab fa-github"></i></a></div>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4><a onclick="showHome()">Home</a><a onclick="showSubjects()">Subjects</a><a
+                    onclick="showFaculty()">Faculty Info</a><a onclick="showQuestions()">Questions</a><a
+                    onclick="showAbout()">About</a><a onclick="showContact()">Contact Us</a>
+            </div>
+            <div class="footer-section">
+                <h4>Our Team</h4>
+                <p>Azra Sadia Bithi (C251246)</p>
+                <p>Eyenun Ilham Mawla (C251262)</p>
+                <p>Mustabira Muntaha Moomo (C251239)</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p><i class="far fa-copyright"></i> 2026 NoteNest â€” Empowering CSE Students</p>
+        </div>
+    </footer>
+
+    <!-- AUTH MODAL -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="auth-tabs"><button class="auth-tab active" id="loginTab">Login</button><button class="auth-tab"
+                    id="signupTab">Sign Up</button></div>
+            <form id="loginForm" class="auth-form active-form">
+                <h3>Welcome Back!</h3>
+                <div class="form-group"><label>Email / Student ID</label><input type="text" id="loginEmail"
+                        placeholder="Enter your email or student ID" required></div>
+                <div class="form-group"><label>Password</label><input type="password" id="loginPassword"
+                        placeholder="Enter your password" required></div>
+                <div style="text-align: right; margin-bottom: 1.2rem;">
+                    <a href="#" onclick="event.preventDefault(); showForgotPasswordForm();" style="color: var(--primary); font-size: 0.85rem; font-weight: 500;">Forgot Password?</a>
+                </div>
+                <button type="submit" class="auth-btn"><i class="fas fa-sign-in-alt"></i> Login</button>
+                <p class="auth-message" id="loginMessage"></p>
+                <p class="auth-footer">Don't have an account? <a id="switchToSignup">Sign up here</a></p>
+            </form>
+            <form id="signupForm" class="auth-form">
+                <h3>Create Account</h3>
+                <div class="form-group"><label>Student ID</label><input type="text" id="signupStudentId"
+                        placeholder="e.g., CSE-2024-001" required></div>
+                <div class="form-group"><label>Email Address</label><input type="email" id="signupEmail"
+                        placeholder="Enter your email" required></div>
+                <div class="form-group"><label>Password</label><input type="password" id="signupPassword"
+                        placeholder="Create password (min. 6 characters)" required></div>
+                <div class="form-group"><label>Confirm Password</label><input type="password" id="confirmPassword"
+                        placeholder="Confirm your password" required></div>
+                <div class="form-group">
+                    <label>Security Question</label>
+                    <select id="signupSecurityQuestion" required style="width: 100%; padding: 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--input-bg); color: var(--text); font-family: inherit;">
+                        <option value="What was the name of your first school?">What was the name of your first school?</option>
+                        <option value="What is the name of your first pet?">What is the name of your first pet?</option>
+                        <option value="In what city were you born?">In what city were you born?</option>
+                        <option value="What is your favorite book?">What is your favorite book?</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Security Answer</label>
+                    <input type="text" id="signupSecurityAnswer" placeholder="Answer for password recovery" required>
+                </div>
+                <button type="submit" class="auth-btn"><i class="fas fa-user-plus"></i> Sign Up</button>
+                <p class="auth-message" id="signupMessage"></p>
+                <p class="auth-footer">Already have an account? <a id="switchToLogin">Login here</a></p>
+            </form>
+            <form id="forgotPasswordForm" class="auth-form" style="display:none;" onsubmit="event.preventDefault(); getSecurityQuestion();">
+                <h3>Reset Password (Step 1 of 2)</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.2rem;">Enter your email or Student ID to retrieve your security question.</p>
+                <div class="form-group">
+                    <label>Email / Student ID</label>
+                    <input type="text" id="forgotEmail" placeholder="Enter your email or student ID" required>
+                </div>
+                <button type="submit" class="auth-btn"><i class="fas fa-question-circle"></i> Retrieve Question</button>
+                <p class="auth-footer"><a href="#" onclick="event.preventDefault(); showLoginForm();">Back to Login</a></p>
+            </form>
+            <form id="resetPasswordForm" class="auth-form" style="display:none;" onsubmit="event.preventDefault(); handlePasswordReset();">
+                <h3>Reset Password (Step 2 of 2)</h3>
+                <input type="hidden" id="resetIdentifier">
+                <div class="form-group">
+                    <label>Security Question</label>
+                    <div id="displayQuestion" style="padding: 0.8rem; background: var(--background); border-radius: var(--radius-md); border: 1px solid var(--border); font-weight: 500; font-size: 0.9rem;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Security Answer</label>
+                    <input type="text" id="resetAnswer" placeholder="Enter your answer" required>
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="resetNewPassword" placeholder="Enter new password (min. 6 chars)" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="resetConfirmPassword" placeholder="Confirm new password" required>
+                </div>
+                <button type="submit" class="auth-btn"><i class="fas fa-key"></i> Reset Password</button>
+                <p class="auth-footer"><a href="#" onclick="event.preventDefault(); showLoginForm();">Cancel</a></p>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
