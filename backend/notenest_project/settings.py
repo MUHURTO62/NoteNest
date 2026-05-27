@@ -65,7 +65,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'notenest_project.urls'
+ROOT_URLCONF = 'backend.notenest_project.urls'
 
 TEMPLATES = [
     {
@@ -82,7 +82,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'notenest_project.wsgi.application'
+WSGI_APPLICATION = 'backend.notenest_project.wsgi.application'
 
 
 # Database
