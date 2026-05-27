@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-jif3p@q)3sv(^e^9$203o0v^v_(w5d-*z*5#km&9a!biv1pgv7'
+# Read secret key from environment for production, fallback to dev key
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-jif3p@q)3sv(^e^9$203o0v^v_(w5d-*z*5#km&9a!biv1pgv7')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Use environment variable DEBUG; default to True for development
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+# Allow hosts from environment (comma-separated) or sensible defaults
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 
 # Application definition
@@ -47,6 +51,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -124,12 +129,30 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Use whitenoise storage for compressed manifest files in production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Custom User Model
 # Make sure we use the custom user model defined in core
 AUTH_USER_MODEL = 'core.User'
 
 # CORS Settings (development only)
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Allow being served behind a proxy (e.g., Render, Heroku)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Database configuration: prefer DATABASE_URL if provided (Postgres on Render)
+try:
+    import dj_database_url
+except Exception:
+    dj_database_url = None
+
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL and dj_database_url is not None:
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600),
+    }
 
 # Django REST Framework
 REST_FRAMEWORK = {
