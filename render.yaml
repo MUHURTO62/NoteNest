@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: notenest
+    env: python
+    pythonVersion: 3.12.0
+    buildCommand: pip install -r requirements.txt && bash build.sh
+    startCommand: gunicorn backend.notenest_project.wsgi --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        scope: build,runtime
+        # Must be set via Render dashboard - use a strong secret key
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        # Will be auto-populated by Render
+        value: "*.onrender.com,127.0.0.1,localhost"
+    # Database can be added via Render's PostgreSQL service
+    # And linked as DATABASE_URL environment variable
