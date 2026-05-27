@@ -8,11 +8,12 @@ services:
     envVars:
       - key: SECRET_KEY
         scope: build,runtime
-        # Must be set via Render dashboard - use a strong secret key
+        value: ""
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        # Will be auto-populated by Render
-        value: "*.onrender.com,127.0.0.1,localhost"
-    # Database can be added via Render's PostgreSQL service
-    # And linked as DATABASE_URL environment variable
+        value: "*.onrender.com,127.0.0.0,localhost"
+      - key: DATABASE_URL
+        scope: runtime
+        value: ""
+    # Configure a Render PostgreSQL database and set DATABASE_URL to the service connection string.
