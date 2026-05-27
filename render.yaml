@@ -4,7 +4,7 @@ services:
     env: python
     pythonVersion: 3.12.0
     buildCommand: pip install -r requirements.txt && bash build.sh
-    startCommand: gunicorn notenest_project.wsgi --bind 0.0.0.0:$PORT
+    startCommand: gunicorn backend.notenest_project.wsgi --bind 0.0.0.0:$PORT
     envVars:
       - key: SECRET_KEY
         scope: build,runtime
