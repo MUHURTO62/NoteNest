@@ -1,7 +1,7 @@
 // ============================================
 // CONSTANTS & STATE
 // ============================================
-const API_BASE = 'http://127.0.0.1:8000/api/admin/';
+const API_BASE = 'https://notenest-1-auxz.onrender.com/api/admin/';
 let semesterCourses = {};
 let facultyData = [];
 let adminOverview = {};
