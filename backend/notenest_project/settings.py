@@ -36,6 +36,10 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,notenest-1-auxz.onrender.com').split(',')
 ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS]  # strip whitespace
 
+# DEBUG: Print ALLOWED_HOSTS at startup
+import sys
+print(f"DEBUG: ALLOWED_HOSTS = {ALLOWED_HOSTS}", file=sys.stderr)
+
 
 # Application definition
 
@@ -57,6 +61,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'backend.notenest_project.debug_middleware.DebugHostMiddleware',  # Debug: log incoming Host
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -171,4 +176,26 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+}
+
+# Logging configuration for debugging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',  # Set to DEBUG for verbose output
+    },
+    'loggers': {
+        'backend.notenest_project.debug_middleware': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
 }
