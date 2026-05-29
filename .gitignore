@@ -5,3 +5,10 @@ db.sqlite3
 backend/staticfiles/
 *.log
 .DS_Store
+# Virtual environments
+.venv/
+backend/venv/
+
+# Local render CLI binary
+render-cli-bin/
+*.exe
