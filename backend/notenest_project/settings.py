@@ -33,7 +33,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-jif3p@q)3sv(^e^9$203o
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 # Allow hosts from environment (comma-separated) or sensible defaults
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,notenest-1-auxz.onrender.com').split(',')
 
 
 # Application definition
@@ -145,6 +145,9 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # Allow being served behind a proxy (e.g., Render, Heroku)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# CSRF trusted origins for POST requests from Render domain
+CSRF_TRUSTED_ORIGINS = ['https://notenest-1-auxz.onrender.com']
 
 # Database configuration: prefer DATABASE_URL if provided (Postgres on Render)
 try:
