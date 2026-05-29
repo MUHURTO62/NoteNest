@@ -30,11 +30,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-jif3p@q)3sv(^e^9$203o
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Use environment variable DEBUG; default to True for development
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Allow hosts from environment (comma-separated) or sensible defaults
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,notenest-1-auxz.onrender.com').split(',')
-ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS]  # strip whitespace
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'notenest-1-auxz.onrender.com,localhost,127.0.0.1').split(',')
 
 # DEBUG: Print ALLOWED_HOSTS at startup
 import sys
