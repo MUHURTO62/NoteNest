@@ -12,7 +12,7 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: "*.onrender.com,127.0.0.1,localhost"
+        value: "notenest-1-auxz.onrender.com,127.0.0.1,localhost"
       - key: DATABASE_URL
         scope: runtime
         value: ""
