@@ -39,9 +39,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
 ]
 
-# DEBUG: Print ALLOWED_HOSTS at startup
-import sys
-print(f"DEBUG: ALLOWED_HOSTS = {ALLOWED_HOSTS}", file=sys.stderr)
+# (Removed debug startup prints)
 
 
 # Application definition
@@ -64,7 +62,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'backend.notenest_project.debug_middleware.DebugHostMiddleware',  # Debug: log incoming Host
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
