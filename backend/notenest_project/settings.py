@@ -153,8 +153,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # CSRF trusted origins for POST requests from Render domain
-CSRF_TRUSTED_ORIGINS = ['https://notenest-1-auxz.onrender.com']
-
+CSRF_TRUSTED_ORIGINS = [
+    'https://notenest-v0zw.onrender.com',
+    'https://notenest-1-auxz.onrender.com',
+]
 # Database configuration: prefer DATABASE_URL if provided (Postgres on Render)
 try:
     import dj_database_url
