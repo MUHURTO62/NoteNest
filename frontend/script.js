@@ -356,7 +356,7 @@ async function showQuestionDetails(qPaperId) {
             <i class="fas fa-file-pdf" style="font-size: 2.5rem; color: var(--danger); margin-bottom: 0.5rem;"></i>
             <h3>Question Paper Available</h3>
             <p style="font-size: 1.1rem; margin: 0.5rem 0;"><strong>${qPaper.course_code} - ${qPaper.course_name}</strong></p>
-            <p style="color: var(--text-muted); margin-bottom: 1rem;">Semester ${qPaper.semester_number} - Term ${qPaper.term}</p>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Semester ${qPaper.semester_number} - ${qPaper.session} ${qPaper.year} (${qPaper.term === 'Mid' ? 'Midterm' : 'Final'})</p>
             ${qPaper.description ? `<p style="font-style: italic; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">"${qPaper.description}"</p>` : ''}
             <div class="btn-group" style="display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
                 <a href="${qPaper.drive_link}" target="_blank" class="btn btn-primary" onclick="logQuestionView(${qPaper.id})"><i class="fas fa-external-link-alt"></i> View / Download</a>
@@ -539,13 +539,14 @@ async function renderAdminQuestions() {
     document.getElementById('adminQuestions').innerHTML = `
         <h2 class="dash-title"><i class="fas fa-file-upload"></i> Upload Question Paper</h2>
         <div class="dash-form">
-            <div class="form-group"><label>Semester</label><select id="qSemester" onchange="updateSubjectOptions()">${semOpts}</select></div>
-            <div class="form-group"><label>Subject Code</label><select id="qSubject"></select></div>
-            <div class="form-group"><label>Year</label><select id="qYear">${yearOpts}</select></div>
-            <div class="form-group"><label>Session</label><select id="qSession"><option value="Autumn">Autumn</option><option value="Spring">Spring</option></select></div>
-            <div class="form-group"><label>Term</label><select id="qTerm"><option value="Mid">Mid</option><option value="Final">Final</option></select></div>
+            <div class="form-group"><label>Semester</label><select id="qSemester" onchange="updateSubjectOptions()" required>${semOpts}</select></div>
+            <div class="form-group"><label>Subject Code</label><select id="qSubject" required></select></div>
+            <div class="form-group"><label>Year</label><select id="qYear" required>${yearOpts}</select></div>
+            <div class="form-group"><label>Session</label><select id="qSession" required><option value="Autumn">Autumn</option><option value="Spring">Spring</option></select></div>
+            <div class="form-group"><label>Term</label><select id="qTerm" required><option value="Mid">Mid</option><option value="Final">Final</option></select></div>
             <div class="form-group"><label>Google Drive / PDF Link</label><input type="url" id="qLink" placeholder="https://drive.google.com/..." required></div>
             <div class="form-group"><label>Description (Optional)</label><input type="text" id="qDesc" placeholder="e.g., Final Exam, Midterm"></div>
+            <div class="form-note">Please select semester, year, session and term before uploading.</div>
             <button class="btn btn-primary" onclick="uploadQuestion()"><i class="fas fa-upload"></i> Upload</button>
         </div>
         <h3 style="margin-top:2rem;margin-bottom:1rem;">Uploaded Questions (${allQuestions.length})</h3>

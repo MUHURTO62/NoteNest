@@ -192,6 +192,20 @@ class Command(BaseCommand):
         else:
             self.stdout.write('Admin user already exists, skipping.')
 
+        if not User.objects.filter(student_id='CSE-100').exists():
+            User.objects.create_user(
+                username='CSE-100',
+                student_id='CSE-100',
+                email='student@notenest.com',
+                password='student123',
+                role='student',
+                security_question='What is your favorite subject?',
+                security_answer='Computer Science',
+            )
+            self.stdout.write(self.style.SUCCESS('[SUCCESS] Dummy student created (CSE-100 / student123)'))
+        else:
+            self.stdout.write('Dummy student already exists, skipping.')
+
         # Create semesters and courses
         ordinals = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th", 5: "5th", 6: "6th", 7: "7th", 8: "8th"}
         course_count = 0
