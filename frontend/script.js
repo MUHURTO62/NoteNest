@@ -8,7 +8,6 @@ let adminOverview = {};
 let allUsers = [];
 let allQuestions = [];
 
-const subButtonsList = ["Au-25", "Sp-25", "Au-24", "Sp-24", "Au-23", "Sp-23", "Au-22", "Sp-22"];
 const STORAGE_KEYS = { CURRENT_USER: 'notenest_current_user' };
 
 // ============================================
@@ -194,7 +193,9 @@ function viewSubject(code, name, sem) {
 
 // QUESTIONS PAGE
 let selectedSemester = null;
-let selectedSubButton = null;
+let selectedYear = '25';
+let selectedSession = 'Autumn';
+let selectedTerm = 'Mid';
 
 function renderQuestionsPage() {
     const container = document.getElementById('questionsContent');
@@ -211,31 +212,72 @@ function renderQuestionsPage() {
         <div id="subjectsDisplayArea" style="display: none;"></div>
     `;
     selectedSemester = null;
-    selectedSubButton = null;
 }
 
 function selectSemester(semester) {
     selectedSemester = semester;
-    let subBtnsHtml = `<div class="sub-buttons-container">`;
-    subButtonsList.forEach(sub => {
-        subBtnsHtml += `<button class="sub-btn" onclick="selectSubButton(${semester}, '${sub}')">${sub}</button>`;
-    });
-    subBtnsHtml += `</div><div class="back-btn"><button class="btn" onclick="renderQuestionsPage()">← Back to Semesters</button></div>`;
-
     document.getElementById('subButtonsArea').style.display = 'block';
-    document.getElementById('subButtonsArea').innerHTML = subBtnsHtml;
+    renderFilters();
     document.getElementById('subjectsDisplayArea').style.display = 'none';
     document.getElementById('subjectsDisplayArea').innerHTML = '';
     document.getElementById('subButtonsArea').scrollIntoView({ behavior: 'smooth' });
+    fetchAndDisplayQuestions();
 }
 
-async function selectSubButton(semester, subButton) {
-    selectedSubButton = subButton;
+function renderFilters() {
+    let filtersHtml = `
+        <div class="questions-filter-panel">
+            <div class="filter-section">
+                <span class="filter-label"><i class="fas fa-calendar-alt"></i> Year</span>
+                <div class="filter-chips" id="yearChips">
+                    ${['26', '25', '24', '23', '22'].map(y => `
+                        <button class="chip ${selectedYear === y ? 'active' : ''}" onclick="setFilter('year', '${y}')">20${y}</button>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <span class="filter-label"><i class="fas fa-snowflake"></i> Session</span>
+                <div class="filter-chips" id="sessionChips">
+                    ${['Autumn', 'Spring'].map(s => `
+                        <button class="chip ${selectedSession === s ? 'active' : ''}" onclick="setFilter('session', '${s}')">${s}</button>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <span class="filter-label"><i class="fas fa-file-signature"></i> Term</span>
+                <div class="filter-chips" id="termChips">
+                    ${['Mid', 'Final'].map(t => `
+                        <button class="chip ${selectedTerm === t ? 'active' : ''}" onclick="setFilter('term', '${t}')">${t === 'Mid' ? 'Midterm' : 'Final'}</button>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+        <div class="back-btn"><button class="btn" onclick="renderQuestionsPage()">← Back to Semesters</button></div>
+    `;
+    document.getElementById('subButtonsArea').innerHTML = filtersHtml;
+}
+
+function setFilter(type, value) {
+    if (type === 'year') {
+        selectedYear = value;
+    } else if (type === 'session') {
+        selectedSession = value;
+    } else if (type === 'term') {
+        selectedTerm = value;
+    }
+    renderFilters();
+    fetchAndDisplayQuestions();
+}
+
+async function fetchAndDisplayQuestions() {
+    const semester = selectedSemester;
     const courses = semesterCourses[semester] || [];
     const ordinal = semester === 1 ? "st" : semester === 2 ? "nd" : semester === 3 ? "rd" : "th";
 
-    // Query backend for available question papers in this semester and term
-    const questions = await fetchAPI(`questions/?semester=${semester}&term=${subButton}`) || [];
+    // Query backend for available question papers in this semester, year, session, and term
+    const questions = await fetchAPI(`questions/?semester=${semester}&year=${selectedYear}&session=${selectedSession}&term=${selectedTerm}`) || [];
     const questionsMap = {};
     questions.forEach(q => {
         questionsMap[q.course_code] = q;
@@ -243,13 +285,13 @@ async function selectSubButton(semester, subButton) {
 
     let subjectsHtml = `
         <div class="subjects-list-container">
-            <div class="selected-info">📖 ${semester}${ordinal} Semester - ${subButton}</div>
+            <div class="selected-info">📖 ${semester}${ordinal} Semester - ${selectedSession} 20${selectedYear} (${selectedTerm === 'Mid' ? 'Midterm' : 'Final'})</div>
             <div class="subjects-list">
     `;
     courses.forEach(course => {
         const qPaper = questionsMap[course.code];
         let statusBadge = `<span class="q-status-badge coming-soon"><i class="fas fa-clock"></i> Coming Soon</span>`;
-        let clickAction = `showComingSoon('${course.code}', '${course.name.replace(/'/g, "\\'")}', ${semester}, '${subButton}')`;
+        let clickAction = `showComingSoon('${course.code}', '${course.name.replace(/'/g, "\\'")}', ${semester}, '${selectedYear}', '${selectedSession}', '${selectedTerm}')`;
         
         if (qPaper) {
             statusBadge = `<span class="q-status-badge available"><i class="fas fa-check-circle"></i> Available</span>`;
@@ -267,13 +309,11 @@ async function selectSubButton(semester, subButton) {
     subjectsHtml += `
             </div>
             <div id="questionDetailsArea" style="display: none; margin-top: 1.5rem;"></div>
-            <div class="back-btn"><button class="btn" onclick="selectSemester(${semester})">← Back to Years</button></div>
         </div>
     `;
 
     document.getElementById('subjectsDisplayArea').style.display = 'block';
     document.getElementById('subjectsDisplayArea').innerHTML = subjectsHtml;
-    document.getElementById('subjectsDisplayArea').scrollIntoView({ behavior: 'smooth' });
 }
 
 async function showQuestionDetails(qPaperId) {
@@ -347,7 +387,7 @@ async function removeBookmarkFromQuestion(id) {
     }
 }
 
-function showComingSoon(code, name, semester, subButton) {
+function showComingSoon(code, name, semester, year, session, term) {
     const ordinal = semester === 1 ? "st" : semester === 2 ? "nd" : semester === 3 ? "rd" : "th";
     const messageDiv = document.createElement('div');
     messageDiv.className = 'coming-soon-message';
@@ -355,7 +395,7 @@ function showComingSoon(code, name, semester, subButton) {
         <i class="fas fa-hourglass-half" style="font-size: 2rem;"></i>
         <h3>Coming Soon!</h3>
         <p>📚 ${code}: ${name}</p>
-        <p>${semester}${ordinal} Semester - ${subButton}</p>
+        <p>${semester}${ordinal} Semester - ${session} 20${year} (${term === 'Mid' ? 'Midterm' : 'Final'})</p>
         <p>Question papers and notes will be available here shortly.</p>
         <button class="btn btn-primary" onclick="this.parentElement.remove()" style="margin-top: 1rem;">Close</button>
     `;
@@ -391,7 +431,8 @@ function filterFaculty() {
 window.filterFaculty = filterFaculty;
 window.viewSubject = viewSubject;
 window.selectSemester = selectSemester;
-window.selectSubButton = selectSubButton;
+window.setFilter = setFilter;
+window.fetchAndDisplayQuestions = fetchAndDisplayQuestions;
 window.showComingSoon = showComingSoon;
 window.showQuestionDetails = showQuestionDetails;
 window.bookmarkQuestion = bookmarkQuestion;
@@ -402,8 +443,24 @@ window.logQuestionView = logQuestionView;
 // PAGE NAVIGATION
 // ============================================
 const authModal = document.getElementById('authModal');
-function openModal() { authModal.style.display = 'block'; }
-function closeModal() { authModal.style.display = 'none'; }
+function openModal() { authModal.style.display = 'block'; document.body.style.overflow = 'hidden'; authModal.scrollTop = 0; }
+function closeModal() { authModal.style.display = 'none'; document.body.style.overflow = ''; }
+function togglePasswordVisibility(inputId, button) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const icon = button.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        button.setAttribute('aria-label', 'Hide password');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        button.setAttribute('aria-label', 'Show password');
+    }
+}
 function showLoginForm() { 
     document.getElementById('loginTab').classList.add('active'); 
     document.getElementById('signupTab').classList.remove('active'); 
@@ -477,21 +534,23 @@ async function renderAdminOverview() {
 async function renderAdminQuestions() { 
     allQuestions = await fetchAPI('questions/') || [];
     let semOpts = ''; for (let i = 1; i <= 8; i++) semOpts += `<option value="${i}">Semester ${i}</option>`; 
-    let termOpts = subButtonsList.map(s => `<option value="${s}">${s}</option>`).join(''); 
+    let yearOpts = ['26', '25', '24', '23', '22'].map(y => `<option value="${y}">20${y}</option>`).join(''); 
     
     document.getElementById('adminQuestions').innerHTML = `
         <h2 class="dash-title"><i class="fas fa-file-upload"></i> Upload Question Paper</h2>
         <div class="dash-form">
             <div class="form-group"><label>Semester</label><select id="qSemester" onchange="updateSubjectOptions()">${semOpts}</select></div>
             <div class="form-group"><label>Subject Code</label><select id="qSubject"></select></div>
-            <div class="form-group"><label>Term</label><select id="qTerm">${termOpts}</select></div>
+            <div class="form-group"><label>Year</label><select id="qYear">${yearOpts}</select></div>
+            <div class="form-group"><label>Session</label><select id="qSession"><option value="Autumn">Autumn</option><option value="Spring">Spring</option></select></div>
+            <div class="form-group"><label>Term</label><select id="qTerm"><option value="Mid">Mid</option><option value="Final">Final</option></select></div>
             <div class="form-group"><label>Google Drive / PDF Link</label><input type="url" id="qLink" placeholder="https://drive.google.com/..." required></div>
             <div class="form-group"><label>Description (Optional)</label><input type="text" id="qDesc" placeholder="e.g., Final Exam, Midterm"></div>
             <button class="btn btn-primary" onclick="uploadQuestion()"><i class="fas fa-upload"></i> Upload</button>
         </div>
         <h3 style="margin-top:2rem;margin-bottom:1rem;">Uploaded Questions (${allQuestions.length})</h3>
         ${allQuestions.length === 0 ? '<div class="empty-state"><i class="fas fa-inbox"></i><p>No questions yet</p></div>' : 
-        '<div class="question-list">' + allQuestions.map(q => `<div class="question-item"><div><span class="q-title">${q.course_code} - ${q.course_name}</span><br><span class="q-meta">Sem ${q.semester_number} - ${q.term}</span></div><div class="question-actions"><a href="${q.drive_link}" target="_blank" class="btn-sm btn-edit"><i class="fas fa-external-link-alt"></i></a><button class="btn-sm btn-delete" onclick="deleteQuestion(${q.id})"><i class="fas fa-trash"></i></button></div></div>`).join('') + '</div>'}
+        '<div class="question-list">' + allQuestions.map(q => `<div class="question-item"><div><span class="q-title">${q.course_code} - ${q.course_name}</span><br><span class="q-meta">Sem ${q.semester_number} - ${q.session} ${q.year} (${q.term})</span></div><div class="question-actions"><a href="${q.drive_link}" target="_blank" class="btn-sm btn-edit"><i class="fas fa-external-link-alt"></i></a><button class="btn-sm btn-delete" onclick="deleteQuestion(${q.id})"><i class="fas fa-trash"></i></button></div></div>`).join('') + '</div>'}
     `; 
     updateSubjectOptions(); 
 }
@@ -537,13 +596,15 @@ loadInitialData = loadInitialDataWithIds;
 async function uploadQuestion() { 
     const sem = document.getElementById('qSemester').value; 
     const courseId = document.getElementById('qSubject').value; 
+    const year = document.getElementById('qYear').value; 
+    const session = document.getElementById('qSession').value; 
     const term = document.getElementById('qTerm').value; 
     const link = document.getElementById('qLink').value; 
     const desc = document.getElementById('qDesc').value || '';
     
     if (!link) { showToast('Please enter a link!', 'error'); return; } 
     
-    const body = { course: parseInt(courseId), semester: parseInt(sem), term: term, drive_link: link, description: desc };
+    const body = { course: parseInt(courseId), semester: parseInt(sem), year: year, session: session, term: term, drive_link: link, description: desc };
     const res = await fetchAPI('questions/', 'POST', body);
     
     if (res && res.id) {

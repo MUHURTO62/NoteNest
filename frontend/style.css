@@ -369,6 +369,11 @@ footer {
 }
 
 /* Modal */
+/* Lock body scroll when modal is open */
+body.modal-open {
+    overflow: hidden;
+}
+
 .auth-modal {
     display: none;
     position: fixed;
@@ -379,17 +384,52 @@ footer {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .auth-modal-content {
     background-color: white;
-    margin: 5% auto;
+    margin: 3rem auto;
     padding: 2.5rem;
     border-radius: var(--radius);
     width: 90%;
     max-width: 500px;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
     position: relative;
     animation: slideIn 0.3s ease;
+}
+
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    flex: 1;
+    padding-right: 3rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: var(--gray);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle:hover {
+    color: var(--primary);
 }
 
 @keyframes slideIn {
@@ -1499,5 +1539,70 @@ footer {
 /* ===== RESPONSIVE: 1280px+ ===== */
 @media (min-width: 1280px) {
     .container { max-width: 1280px; }
+}
+
+/* Questions Filter Panel */
+.questions-filter-panel {
+    background: white;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-light);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.filter-section {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-label {
+    font-weight: 600;
+    color: var(--dark);
+    min-width: 100px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.filter-label i {
+    color: var(--primary);
+}
+
+.filter-chips {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.chip {
+    padding: 0.5rem 1.2rem;
+    border: 1px solid var(--primary-light);
+    background: #f0f4ff;
+    color: var(--primary-dark);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.chip:hover {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.chip.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
 }
 
