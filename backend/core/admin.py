@@ -32,8 +32,8 @@ class CourseAdmin(admin.ModelAdmin):
 
 @admin.register(QuestionPaper)
 class QuestionPaperAdmin(admin.ModelAdmin):
-    list_display = ['course', 'semester', 'term', 'uploaded_by', 'uploaded_at']
-    list_filter = ['semester', 'term']
+    list_display = ['course', 'semester', 'year', 'session', 'term', 'uploaded_by', 'uploaded_at']
+    list_filter = ['semester', 'year', 'session', 'term']
     search_fields = ['course__code', 'course__name']
 
 

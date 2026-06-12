@@ -37,7 +37,7 @@ class QuestionPaperSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionPaper
         fields = [
-            'id', 'semester', 'course', 'term', 'drive_link', 'description',
+            'id', 'semester', 'course', 'year', 'session', 'term', 'drive_link', 'description',
             'uploaded_by', 'uploaded_at',
             'course_code', 'course_name', 'semester_number', 'uploaded_by_name',
         ]
@@ -49,7 +49,7 @@ class QuestionPaperCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = QuestionPaper
-        fields = ['id', 'semester', 'course', 'term', 'drive_link', 'description']
+        fields = ['id', 'semester', 'course', 'year', 'session', 'term', 'drive_link', 'description']
 
 
 class UserSignupSerializer(serializers.ModelSerializer):

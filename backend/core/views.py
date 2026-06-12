@@ -196,12 +196,18 @@ class AdminQuestionListCreateView(generics.ListCreateAPIView):
         queryset = QuestionPaper.objects.all()
         semester = self.request.query_params.get('semester')
         course_code = self.request.query_params.get('course')
+        year = self.request.query_params.get('year')
+        session = self.request.query_params.get('session')
         term = self.request.query_params.get('term')
 
         if semester:
             queryset = queryset.filter(semester__number=semester)
         if course_code:
             queryset = queryset.filter(course__code=course_code)
+        if year:
+            queryset = queryset.filter(year=year)
+        if session:
+            queryset = queryset.filter(session=session)
         if term:
             queryset = queryset.filter(term=term)
         return queryset

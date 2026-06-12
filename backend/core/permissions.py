@@ -14,13 +14,13 @@ class IsAdmin(BasePermission):
 
 class IsAuthenticatedAndAdminOrReadOnly(BasePermission):
     """
-    Allows safe methods (GET, HEAD, OPTIONS) to any user (authenticated or not).
+    Allows safe methods (GET, HEAD, OPTIONS) to authenticated users.
     Allows write methods (POST, DELETE, etc.) only to users with role='admin'.
     """
 
     def has_permission(self, request, view):
-        if request.method in ['GET', 'HEAD', 'OPTIONS']:
-            return True
         if not (request.user and request.user.is_authenticated):
             return False
+        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return True
         return request.user.role == 'admin'

@@ -115,7 +115,7 @@ After running `python manage.py seed_data`, the following accounts are available
 
 | Role | Email | Student ID | Password |
 |------|-------|------------|---------|
-| **Student** | `student@notenest.com` | `student` | `123456` |
+| **Student** | `student@notenest.com` | `CSE-100` | `student@cse100` |
 | **Admin** | `admin@notenest.com` | `admin` | `admin123` |
 
 You can also use these credentials to log into the Django Admin panel at:

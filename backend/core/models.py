@@ -50,9 +50,27 @@ class Course(models.Model):
 
 class QuestionPaper(models.Model):
     """An uploaded question paper with a Google Drive link."""
+    YEAR_CHOICES = [
+        ('26', '2026'),
+        ('25', '2025'),
+        ('24', '2024'),
+        ('23', '2023'),
+        ('22', '2022'),
+    ]
+    SESSION_CHOICES = [
+        ('Autumn', 'Autumn'),
+        ('Spring', 'Spring'),
+    ]
+    TERM_CHOICES = [
+        ('Mid', 'Mid'),
+        ('Final', 'Final'),
+    ]
+
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE, related_name='questions')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='questions')
-    term = models.CharField(max_length=10)  # e.g., "Au-25", "Sp-24"
+    year = models.CharField(max_length=4, choices=YEAR_CHOICES, default='25')
+    session = models.CharField(max_length=10, choices=SESSION_CHOICES, default='Autumn')
+    term = models.CharField(max_length=10, choices=TERM_CHOICES, default='Mid')
     drive_link = models.URLField()
     description = models.TextField(blank=True, default='')
     uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -62,7 +80,7 @@ class QuestionPaper(models.Model):
         ordering = ['-uploaded_at']
 
     def __str__(self):
-        return f"{self.course.code} - {self.term}"
+        return f"{self.course.code} - {self.session} {self.year} ({self.term})"
 
 
 class Faculty(models.Model):

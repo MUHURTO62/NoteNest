@@ -41,7 +41,9 @@ class NoteNestBackendTests(TestCase):
         self.question = QuestionPaper.objects.create(
             semester=self.semester,
             course=self.course,
-            term='Au-24',
+            year='24',
+            session='Autumn',
+            term='Mid',
             drive_link='https://drive.google.com/test',
             uploaded_by=self.admin_user
         )
@@ -52,7 +54,7 @@ class NoteNestBackendTests(TestCase):
         self.assertEqual(str(self.semester), "1st Semester")
         self.assertEqual(str(self.course), "CSE-1121 - Computer Programming I")
         self.assertEqual(str(self.faculty), "Dr. Test (Professor)")
-        self.assertEqual(str(self.question), "CSE-1121 - Au-24")
+        self.assertEqual(str(self.question), "CSE-1121 - Autumn 24 (Mid)")
 
     def test_anonymous_access_permissions(self):
         """Verify anonymous access: semesters is allowed, others are blocked."""
