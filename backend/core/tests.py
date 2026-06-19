@@ -16,7 +16,7 @@ class NoteNestBackendTests(TestCase):
         )
         self.student_user = User.objects.create_user(
             username='student_user',
-            student_id='CSE-100',
+            student_id='CSE-101',
             email='student@test.com',
             password='testpassword',
             role='student',
@@ -106,7 +106,7 @@ class NoteNestBackendTests(TestCase):
         
         response = self.client.get(reverse('admin-overview'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['total_users'], 2)
+        self.assertEqual(response.data['total_users'], 3)
         self.assertEqual(response.data['total_questions'], 1)
         self.assertEqual(response.data['total_faculty'], 1)
 

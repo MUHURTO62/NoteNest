@@ -14,8 +14,8 @@ const STORAGE_KEYS = { CURRENT_USER: 'notenest_current_user' };
 // API HELPERS
 // ============================================
 async function fetchAPI(endpoint, method = 'GET', body = null) {
-    const headers = { 'Content-Type': 'application/json' };
     const currentUser = getCurrentUser();
+    const headers = {};
     if (currentUser && currentUser.token) {
         headers['Authorization'] = `Token ${currentUser.token}`;
     }
@@ -25,7 +25,14 @@ async function fetchAPI(endpoint, method = 'GET', body = null) {
         headers,
         credentials: 'omit'
     };
-    if (body) options.body = JSON.stringify(body);
+    if (body) {
+        if (body instanceof FormData) {
+            options.body = body;
+        } else {
+            headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(body);
+        }
+    }
     
     try {
         const response = await fetch(`${API_BASE}${endpoint}`, options);
@@ -132,6 +139,7 @@ function updateUI() {
     const user = getCurrentUser();
     const loginBtn = document.getElementById('loginBtn'), signupBtn = document.getElementById('signupBtn'), userProfile = document.getElementById('userProfile'), userName = document.getElementById('userName');
     const homeLink = document.getElementById('homeNavLink'), dashLink = document.getElementById('dashboardNavLink'), dashText = document.getElementById('dashboardNavText');
+    const adminPanelLink = document.getElementById('adminPanelNavLink');
     const navAuthM = document.getElementById('navAuthMobile'), logoutNavM = document.getElementById('logoutNavLinkMobile');
     
     if (user) {
@@ -141,6 +149,7 @@ function updateUI() {
         if (userProfile) { userProfile.style.display = 'flex'; if (userName) userName.textContent = user.studentId; }
         if (homeLink) homeLink.style.display = 'none';
         if (dashLink) { dashLink.style.display = 'inline'; if (dashText) dashText.textContent = user.role === 'admin' ? 'Admin Dashboard' : 'Student Dashboard'; }
+        if (adminPanelLink) adminPanelLink.style.display = user.role === 'admin' ? 'inline' : 'none';
     } else {
         if (loginBtn) loginBtn.style.display = ''; if (signupBtn) signupBtn.style.display = '';
         if (navAuthM) navAuthM.classList.add('active');
@@ -148,6 +157,7 @@ function updateUI() {
         if (userProfile) userProfile.style.display = 'none';
         if (homeLink) homeLink.style.display = 'inline';
         if (dashLink) dashLink.style.display = 'none';
+        if (adminPanelLink) adminPanelLink.style.display = 'none';
     }
 }
 
@@ -327,14 +337,11 @@ async function showQuestionDetails(qPaperId) {
     detailsArea.style.display = 'block';
     detailsArea.innerHTML = '<div style="text-align:center;padding:1rem;"><i class="fas fa-spinner fa-spin"></i> Loading details...</div>';
 
-    // Retrieve details & check if bookmarked
     const bookmarks = await fetchAPI('student/bookmarks/') || [];
     const isBookmarked = bookmarks.some(b => b.question_paper == qPaperId);
 
-    // Get specific question from allQuestions if cached, or query
     let qPaper = allQuestions.find(q => q.id == qPaperId);
     if (!qPaper) {
-        // Fetch specific details (or just filter list)
         const papers = await fetchAPI(`questions/`) || [];
         qPaper = papers.find(q => q.id == qPaperId);
     }
@@ -352,19 +359,60 @@ async function showQuestionDetails(qPaperId) {
     }
 
     detailsArea.innerHTML = `
-        <div class="coming-soon-message" style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-md); max-width: 500px; margin: 1rem auto; text-align: center;">
-            <i class="fas fa-file-pdf" style="font-size: 2.5rem; color: var(--danger); margin-bottom: 0.5rem;"></i>
-            <h3>Question Paper Available</h3>
-            <p style="font-size: 1.1rem; margin: 0.5rem 0;"><strong>${qPaper.course_code} - ${qPaper.course_name}</strong></p>
-            <p style="color: var(--text-muted); margin-bottom: 1rem;">Semester ${qPaper.semester_number} - ${qPaper.session} ${qPaper.year} (${qPaper.term === 'Mid' ? 'Midterm' : 'Final'})</p>
-            ${qPaper.description ? `<p style="font-style: italic; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">"${qPaper.description}"</p>` : ''}
-            <div class="btn-group" style="display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
-                <a href="${qPaper.drive_link}" target="_blank" class="btn btn-primary" onclick="logQuestionView(${qPaper.id})"><i class="fas fa-external-link-alt"></i> View / Download</a>
+        <div class="coming-soon-message" style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-md); max-width: 700px; margin: 1rem auto; text-align: left; padding: 1.5rem;">
+            <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
+                <i class="fas fa-file-pdf" style="font-size: 2.5rem; color: var(--danger);"></i>
+                <div>
+                    <h3 style="margin:0;">${qPaper.course_code} - ${qPaper.course_name}</h3>
+                    <p style="margin:0.25rem 0; color: var(--text-muted);">Semester ${qPaper.semester_number} - ${qPaper.session} ${qPaper.year} (${qPaper.term === 'Mid' ? 'Midterm' : 'Final'})</p>
+                </div>
+            </div>
+            ${qPaper.description ? `<p style="font-style: italic; color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">"${qPaper.description}"</p>` : ''}
+            <div class="btn-group" style="display: flex; justify-content: flex-start; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                <a href="${qPaper.question_file_url || qPaper.drive_link}" target="_blank" class="btn btn-primary" onclick="logQuestionView(${qPaper.id})"><i class="fas fa-external-link-alt"></i> View / Download</a>
                 ${bookmarkBtn}
             </div>
+            <div id="questionCommentsSection"></div>
         </div>
     `;
     detailsArea.scrollIntoView({ behavior: 'smooth' });
+    await loadQuestionComments(qPaperId);
+}
+
+async function loadQuestionComments(questionPaperId) {
+    const comments = await fetchAPI(`questions/${questionPaperId}/comments/`) || [];
+    const commentsHtml = comments.length === 0 ? '<p style="color: var(--text-muted);">No comments yet. Be the first to comment.</p>' : comments.map(c => `
+            <div class="comment-card">
+                <div><strong>${c.user_name}</strong> <span class="q-meta" style="font-size:0.8rem;color:var(--gray);">${new Date(c.created_at).toLocaleString()}</span></div>
+                <p style="margin:0.5rem 0 0;">${c.content}</p>
+            </div>
+        `).join('');
+
+    const section = document.getElementById('questionCommentsSection');
+    section.innerHTML = `
+        <div style="margin-top:1.5rem;">
+            <h4 style="margin-bottom:0.75rem;">Comments</h4>
+            <div class="comment-form" style="margin-bottom:1rem;">
+                <textarea id="questionCommentContent" rows="3" placeholder="Write a comment..." style="width:100%;padding:0.8rem;border:1px solid var(--border);border-radius:var(--radius-md);resize:none;"></textarea>
+                <button class="btn btn-primary" onclick="submitQuestionComment(${questionPaperId})" style="margin-top:0.75rem;"><i class="fas fa-paper-plane"></i> Post Comment</button>
+            </div>
+            <div>${commentsHtml}</div>
+        </div>
+    `;
+}
+
+async function submitQuestionComment(questionPaperId) {
+    const content = document.getElementById('questionCommentContent').value.trim();
+    if (!content) {
+        showToast('Please enter a comment', 'error');
+        return;
+    }
+    const res = await fetchAPI(`questions/${questionPaperId}/comments/`, 'POST', { content });
+    if (res && res.id) {
+        showToast('Comment posted', 'success');
+        document.getElementById('questionCommentContent').value = '';
+        loadQuestionComments(questionPaperId);
+    }
 }
 
 async function logQuestionView(id) {
@@ -544,14 +592,15 @@ async function renderAdminQuestions() {
             <div class="form-group"><label>Year</label><select id="qYear" required>${yearOpts}</select></div>
             <div class="form-group"><label>Session</label><select id="qSession" required><option value="Autumn">Autumn</option><option value="Spring">Spring</option></select></div>
             <div class="form-group"><label>Term</label><select id="qTerm" required><option value="Mid">Mid</option><option value="Final">Final</option></select></div>
-            <div class="form-group"><label>Google Drive / PDF Link</label><input type="url" id="qLink" placeholder="https://drive.google.com/..." required></div>
+            <div class="form-group"><label>Google Drive Link (optional)</label><input type="url" id="qLink" placeholder="https://drive.google.com/..." ></div>
+            <div class="form-group"><label>Upload PDF File (optional)</label><input type="file" id="qFile" accept=".pdf,.doc,.docx,.ppt,.pptx"></div>
             <div class="form-group"><label>Description (Optional)</label><input type="text" id="qDesc" placeholder="e.g., Final Exam, Midterm"></div>
-            <div class="form-note">Please select semester, year, session and term before uploading.</div>
+            <div class="form-note">Provide either a PDF file or a Google Drive link for the question paper.</div>
             <button class="btn btn-primary" onclick="uploadQuestion()"><i class="fas fa-upload"></i> Upload</button>
         </div>
         <h3 style="margin-top:2rem;margin-bottom:1rem;">Uploaded Questions (${allQuestions.length})</h3>
         ${allQuestions.length === 0 ? '<div class="empty-state"><i class="fas fa-inbox"></i><p>No questions yet</p></div>' : 
-        '<div class="question-list">' + allQuestions.map(q => `<div class="question-item"><div><span class="q-title">${q.course_code} - ${q.course_name}</span><br><span class="q-meta">Sem ${q.semester_number} - ${q.session} ${q.year} (${q.term})</span></div><div class="question-actions"><a href="${q.drive_link}" target="_blank" class="btn-sm btn-edit"><i class="fas fa-external-link-alt"></i></a><button class="btn-sm btn-delete" onclick="deleteQuestion(${q.id})"><i class="fas fa-trash"></i></button></div></div>`).join('') + '</div>'}
+        '<div class="question-list">' + allQuestions.map(q => `<div class="question-item"><div><span class="q-title">${q.course_code} - ${q.course_name}</span><br><span class="q-meta">Sem ${q.semester_number} - ${q.session} ${q.year} (${q.term})</span></div><div class="question-actions"><a href="${q.question_file_url || q.drive_link}" target="_blank" class="btn-sm btn-edit"><i class="fas fa-external-link-alt"></i></a><button class="btn-sm btn-delete" onclick="deleteQuestion(${q.id})"><i class="fas fa-trash"></i></button></div></div>`).join('') + '</div>'}
     `; 
     updateSubjectOptions(); 
 }
@@ -601,12 +650,23 @@ async function uploadQuestion() {
     const session = document.getElementById('qSession').value; 
     const term = document.getElementById('qTerm').value; 
     const link = document.getElementById('qLink').value; 
+    const fileInput = document.getElementById('qFile');
+    const file = fileInput.files[0];
     const desc = document.getElementById('qDesc').value || '';
-    
-    if (!link) { showToast('Please enter a link!', 'error'); return; } 
-    
-    const body = { course: parseInt(courseId), semester: parseInt(sem), year: year, session: session, term: term, drive_link: link, description: desc };
-    const res = await fetchAPI('questions/', 'POST', body);
+
+    if (!link && !file) { showToast('Please provide a Google Drive link or upload a file', 'error'); return; } 
+
+    const formData = new FormData();
+    formData.append('course', courseId);
+    formData.append('semester', sem);
+    formData.append('year', year);
+    formData.append('session', session);
+    formData.append('term', term);
+    formData.append('description', desc);
+    if (link) formData.append('drive_link', link);
+    if (file) formData.append('question_file', file);
+
+    const res = await fetchAPI('questions/', 'POST', formData);
     
     if (res && res.id) {
         showToast('Question uploaded!', 'success'); 
@@ -679,6 +739,40 @@ async function renderAdminUsers() {
             <table class="dash-table"><thead><tr><th>#</th><th>Student ID</th><th>Email</th><th>Role</th></tr></thead>
             <tbody>${users.map((u, i) => `<tr><td>${i + 1}</td><td>${u.student_id}</td><td>${u.email}</td><td><span style="background:${u.role === 'admin' ? 'var(--danger)' : 'var(--secondary)'};color:white;padding:0.2rem 0.6rem;border-radius:var(--radius-full);font-size:0.75rem;">${u.role}</span></td></tr>`).join('')}</tbody></table>
         </div>`; 
+}
+
+async function renderAdminNoteRequests() {
+    const requests = await fetchAPI('admin/note-requests/') || [];
+    document.getElementById('adminNoteRequests').innerHTML = `
+        <h2 class="dash-title"><i class="fas fa-file-upload"></i> Note Upload Requests</h2>
+        ${requests.length === 0 ? '<div class="empty-state"><i class="fas fa-inbox"></i><p>No note requests found.</p></div>' : ''}
+        <div style="overflow-x:auto;">
+            <table class="dash-table"><thead><tr><th>#</th><th>Student</th><th>Title</th><th>Status</th><th>Uploaded File</th><th>Admin Note</th><th>Action</th></tr></thead>
+            <tbody>${requests.map((req, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${req.user_name}</td>
+                    <td>${req.title}</td>
+                    <td><span style="background:${req.status === 'accepted' ? 'var(--secondary)' : req.status === 'rejected' ? 'var(--danger)' : 'var(--warning)'};color:white;padding:0.2rem 0.6rem;border-radius:var(--radius-full);font-size:0.75rem;">${req.status}</span></td>
+                    <td>${req.note_file_url ? `<a href="${req.note_file_url}" target="_blank">Download</a>` : 'No file'}</td>
+                    <td>${req.admin_message || '-'}</td>
+                    <td>
+                        <button class="btn-sm btn-edit" onclick="updateNoteRequestStatus(${req.id}, 'accepted')"><i class="fas fa-check"></i></button>
+                        <button class="btn-sm btn-delete" onclick="updateNoteRequestStatus(${req.id}, 'rejected')"><i class="fas fa-times"></i></button>
+                    </td>
+                </tr>
+            `).join('')}</tbody></table>
+        </div>
+    `;
+}
+
+async function updateNoteRequestStatus(id, status) {
+    const reason = prompt(`Provide a short note for ${status}ing this request:`) || '';
+    const res = await fetchAPI(`admin/note-requests/${id}/`, 'PATCH', { status, admin_message: reason });
+    if (res) {
+        showToast(`Note request ${status}ed successfully`, 'success');
+        renderAdminNoteRequests();
+    }
 }
 
 // ============================================
@@ -793,28 +887,80 @@ async function renderStudentHistory() {
     `;
 }
 
+async function renderStudentNoteRequests() {
+    const requests = await fetchAPI('student/note-requests/') || [];
+    document.getElementById('studentNoteRequests').innerHTML = `
+        <h2 class="dash-title"><i class="fas fa-upload"></i> Upload Study Notes</h2>
+        <div class="dash-form" style="margin-bottom: 2rem;">
+            <div class="form-group"><label>Title</label><input type="text" id="noteTitle" placeholder="Note title or subject"></div>
+            <div class="form-group"><label>Description</label><textarea id="noteDescription" placeholder="Optional description" rows="3"></textarea></div>
+            <div class="form-group"><label>Upload File</label><input type="file" id="noteFile" accept=".pdf,.doc,.docx,.ppt,.pptx" required></div>
+            <button class="btn btn-primary" onclick="submitNoteRequest()"><i class="fas fa-paper-plane"></i> Submit Note Request</button>
+        </div>
+        <h3>My Requests</h3>
+        ${requests.length === 0 ? '<div class="empty-state"><i class="fas fa-inbox"></i><p>You have not submitted any note requests yet.</p></div>' : ''}
+        <div style="overflow-x:auto;">
+            <table class="dash-table"><thead><tr><th>#</th><th>Title</th><th>Status</th><th>Admin Note</th><th>Uploaded File</th><th>Submitted At</th></tr></thead>
+            <tbody>${requests.map((req, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${req.title}</td>
+                    <td><span style="background:${req.status === 'accepted' ? 'var(--secondary)' : req.status === 'rejected' ? 'var(--danger)' : 'var(--warning)'};color:white;padding:0.2rem 0.6rem;border-radius:var(--radius-full);font-size:0.75rem;">${req.status}</span></td>
+                    <td>${req.admin_message || '-'}</td>
+                    <td>${req.note_file_url ? `<a href="${req.note_file_url}" target="_blank">Download</a>` : 'No file'}</td>
+                    <td>${new Date(req.created_at).toLocaleString()}</td>
+                </tr>
+            `).join('')}</tbody></table>
+        </div>
+    `;
+}
+
+async function submitNoteRequest() {
+    const title = document.getElementById('noteTitle').value.trim();
+    const description = document.getElementById('noteDescription').value.trim();
+    const fileInput = document.getElementById('noteFile');
+    const file = fileInput.files[0];
+    if (!title || !file) {
+        showToast('Please provide title and attach a file', 'error');
+        return;
+    }
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('note_file', file);
+
+    const res = await fetchAPI('student/note-requests/', 'POST', formData);
+    if (res && res.id) {
+        showToast('Note request submitted', 'success');
+        document.getElementById('noteTitle').value = '';
+        document.getElementById('noteDescription').value = '';
+        fileInput.value = '';
+        renderStudentNoteRequests();
+    }
+}
+
 // Password Reset Action Flow
-async function getSecurityQuestion() {
+async function requestResetCode() {
     const ident = document.getElementById('forgotEmail').value.trim();
     if (!ident) {
         showToast('Please enter your email or Student ID', 'error');
         return;
     }
-    const res = await fetchAPI(`auth/forgot-password/?identifier=${encodeURIComponent(ident)}`);
-    if (res && res.security_question) {
+    const res = await fetchAPI('auth/request-reset-code/', 'POST', { identifier: ident });
+    if (res && res.message) {
         document.getElementById('resetIdentifier').value = ident;
-        document.getElementById('displayQuestion').textContent = res.security_question;
         showResetPasswordForm();
+        showToast(res.message, 'success');
     }
 }
 
 async function handlePasswordReset() {
     const ident = document.getElementById('resetIdentifier').value;
-    const answer = document.getElementById('resetAnswer').value.trim();
+    const code = document.getElementById('resetCode').value.trim();
     const newPass = document.getElementById('resetNewPassword').value;
     const confirmPass = document.getElementById('resetConfirmPassword').value;
 
-    if (!answer || !newPass || !confirmPass) {
+    if (!code || !newPass || !confirmPass) {
         showToast('Please fill all fields', 'error');
         return;
     }
@@ -827,9 +973,9 @@ async function handlePasswordReset() {
         return;
     }
 
-    const res = await fetchAPI('auth/reset-password/', 'POST', {
+    const res = await fetchAPI('auth/verify-reset-code/', 'POST', {
         identifier: ident,
-        security_answer: answer,
+        code: code,
         new_password: newPass
     });
 
@@ -840,7 +986,7 @@ async function handlePasswordReset() {
 }
 
 window.removeBookmark = removeBookmark;
-window.getSecurityQuestion = getSecurityQuestion;
+window.requestResetCode = requestResetCode;
 window.handlePasswordReset = handlePasswordReset;
 window.showForgotPasswordForm = showForgotPasswordForm;
 window.showResetPasswordForm = showResetPasswordForm;

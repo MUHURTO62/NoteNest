@@ -2,7 +2,7 @@
 from django.contrib import admin
 # pyrefly: ignore [missing-import]
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Semester, Course, QuestionPaper, Faculty, Bookmark, ActivityLog
+from .models import User, Semester, Course, QuestionPaper, Faculty, Bookmark, ActivityLog, Comment, NoteUploadRequest, PasswordResetCode
 
 
 @admin.register(User)
@@ -35,6 +35,27 @@ class QuestionPaperAdmin(admin.ModelAdmin):
     list_display = ['course', 'semester', 'year', 'session', 'term', 'uploaded_by', 'uploaded_at']
     list_filter = ['semester', 'year', 'session', 'term']
     search_fields = ['course__code', 'course__name']
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ['user', 'question_paper', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['user__student_id', 'question_paper__course__code', 'content']
+
+
+@admin.register(NoteUploadRequest)
+class NoteUploadRequestAdmin(admin.ModelAdmin):
+    list_display = ['title', 'user', 'status', 'created_at', 'updated_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['title', 'user__student_id', 'admin_message']
+
+
+@admin.register(PasswordResetCode)
+class PasswordResetCodeAdmin(admin.ModelAdmin):
+    list_display = ['user', 'code', 'used', 'created_at']
+    list_filter = ['used', 'created_at']
+    search_fields = ['user__student_id', 'code']
 
 
 @admin.register(Faculty)

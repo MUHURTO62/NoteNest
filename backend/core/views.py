@@ -1,10 +1,24 @@
 from django.contrib.auth import authenticate
 from rest_framework import generics, status, permissions
 from rest_framework.authtoken.models import Token
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import User, Semester, Course, QuestionPaper, Faculty, Bookmark, ActivityLog
+from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
+from .models import (
+    User,
+    Semester,
+    Course,
+    QuestionPaper,
+    Faculty,
+    Bookmark,
+    ActivityLog,
+    Comment,
+    NoteUploadRequest,
+    PasswordResetCode,
+)
 from .permissions import IsAdmin, IsAuthenticatedAndAdminOrReadOnly
 from .serializers import (
     UserSerializer,
@@ -15,6 +29,8 @@ from .serializers import (
     UserSignupSerializer,
     BookmarkSerializer,
     ActivityLogSerializer,
+    CommentSerializer,
+    NoteUploadRequestSerializer,
 )
 
 
@@ -143,6 +159,70 @@ class ResetPasswordView(APIView):
         return Response({'error': 'Incorrect answer to the security question'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class RequestPasswordResetCodeView(APIView):
+    """POST /api/auth/request-reset-code/ — Send a verification code to the user's email."""
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        identifier = request.data.get('identifier')
+        if not identifier:
+            return Response({'error': 'Identifier is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = None
+        if '@' in identifier:
+            user = User.objects.filter(email=identifier).first()
+        else:
+            user = User.objects.filter(student_id=identifier).first()
+
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        code = get_random_string(length=6, allowed_chars='0123456789')
+        PasswordResetCode.objects.create(user=user, code=code)
+        send_mail(
+            subject='NoteNest Password Reset Code',
+            message=f'Your password reset code is: {code}',
+            from_email=None,
+            recipient_list=[user.email],
+            fail_silently=True,
+        )
+        ActivityLog.objects.create(user=user, action='Requested password reset code via email')
+        return Response({'message': 'Verification code sent to your email address'}, status=status.HTTP_200_OK)
+
+
+class VerifyPasswordResetCodeView(APIView):
+    """POST /api/auth/verify-reset-code/ — Verify reset code and update password."""
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        identifier = request.data.get('identifier')
+        code = request.data.get('code')
+        new_password = request.data.get('new_password')
+
+        if not identifier or not code or not new_password:
+            return Response({'error': 'All fields are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = None
+        if '@' in identifier:
+            user = User.objects.filter(email=identifier).first()
+        else:
+            user = User.objects.filter(student_id=identifier).first()
+
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        reset_code = PasswordResetCode.objects.filter(user=user, code=code, used=False).order_by('-created_at').first()
+        if not reset_code or reset_code.is_expired():
+            return Response({'error': 'Invalid or expired verification code'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+        reset_code.used = True
+        reset_code.save()
+        ActivityLog.objects.create(user=user, action='Reset password via email verification code')
+        return Response({'message': 'Password has been reset successfully'}, status=status.HTTP_200_OK)
+
+
 # ─── Admin Overview ──────────────────────────────────────────────
 class AdminOverviewView(APIView):
     """GET /api/admin/overview/ — Dashboard stats."""
@@ -186,6 +266,7 @@ class AdminQuestionListCreateView(generics.ListCreateAPIView):
     """GET /api/admin/questions/ — List question papers with filtering (authenticated students/admins).
        POST /api/admin/questions/ — Upload a new question paper (admin only)."""
     permission_classes = [IsAuthenticatedAndAdminOrReadOnly]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -221,6 +302,68 @@ class AdminQuestionDeleteView(generics.DestroyAPIView):
     permission_classes = [IsAdmin]
     queryset = QuestionPaper.objects.all()
     serializer_class = QuestionPaperSerializer
+
+
+class QuestionCommentListCreateView(APIView):
+    """GET /api/questions/<id>/comments/ — List comments for a question paper.
+       POST /api/questions/<id>/comments/ — Add a comment to a question paper."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, question_paper_id):
+        try:
+            question = QuestionPaper.objects.get(id=question_paper_id)
+        except QuestionPaper.DoesNotExist:
+            return Response({'error': 'Question paper not found'}, status=status.HTTP_404_NOT_FOUND)
+        comments = Comment.objects.filter(question_paper=question)
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, question_paper_id):
+        try:
+            question = QuestionPaper.objects.get(id=question_paper_id)
+        except QuestionPaper.DoesNotExist:
+            return Response({'error': 'Question paper not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user, question_paper=question)
+            ActivityLog.objects.create(user=request.user, action=f"Commented on question paper: {question.course.code} ({question.term})")
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NoteUploadRequestListCreateView(generics.ListCreateAPIView):
+    """GET /api/student/note-requests/ — List own note requests.
+       POST /api/student/note-requests/ — Create a note upload request."""
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        return NoteUploadRequest.objects.filter(user=self.request.user)
+
+    def get_serializer_class(self):
+        return NoteUploadRequestSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class AdminNoteRequestListView(generics.ListAPIView):
+    """GET /api/admin/note-requests/ — List all note upload requests (admin only)."""
+    permission_classes = [IsAdmin]
+    queryset = NoteUploadRequest.objects.all()
+    serializer_class = NoteUploadRequestSerializer
+
+
+class AdminNoteRequestUpdateView(generics.UpdateAPIView):
+    """PATCH /api/admin/note-requests/<id>/ — Approve or reject a note upload request."""
+    permission_classes = [IsAdmin]
+    queryset = NoteUploadRequest.objects.all()
+    serializer_class = NoteUploadRequestSerializer
+    http_method_names = ['patch']
+
+    def perform_update(self, serializer):
+        serializer.save()
 
 
 # ─── Semesters (with courses for dropdowns & public subjects list) ──────────────────────

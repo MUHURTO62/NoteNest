@@ -71,7 +71,8 @@ class QuestionPaper(models.Model):
     year = models.CharField(max_length=4, choices=YEAR_CHOICES, default='25')
     session = models.CharField(max_length=10, choices=SESSION_CHOICES, default='Autumn')
     term = models.CharField(max_length=10, choices=TERM_CHOICES, default='Mid')
-    drive_link = models.URLField()
+    drive_link = models.URLField(blank=True, default='')
+    question_file = models.FileField(upload_to='question_papers/', null=True, blank=True)
     description = models.TextField(blank=True, default='')
     uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
@@ -81,6 +82,60 @@ class QuestionPaper(models.Model):
 
     def __str__(self):
         return f"{self.course.code} - {self.session} {self.year} ({self.term})"
+
+
+class Comment(models.Model):
+    """User comments on uploaded question papers."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    question_paper = models.ForeignKey(QuestionPaper, on_delete=models.CASCADE, related_name='comments')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Comment by {self.user.student_id} on {self.question_paper}"
+
+
+class NoteUploadRequest(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='note_requests')
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, default='')
+    note_file = models.FileField(upload_to='student_notes/', null=True, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    admin_message = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} ({self.status}) by {self.user.student_id}"
+
+
+class PasswordResetCode(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reset_codes')
+    code = models.CharField(max_length=8)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used = models.BooleanField(default=False)
+
+    def is_expired(self):
+        from django.utils import timezone
+        return timezone.now() > self.created_at + timezone.timedelta(minutes=30)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Reset code for {self.user.student_id} - {'used' if self.used else 'active'}"
 
 
 class Faculty(models.Model):

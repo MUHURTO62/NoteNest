@@ -138,9 +138,15 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Use whitenoise storage for compressed manifest files in production
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Email backend configuration for password reset code delivery
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@notenest.com')
 
 # Custom User Model
 # Make sure we use the custom user model defined in core

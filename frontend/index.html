@@ -34,6 +34,7 @@
             <div class="nav-links" id="navLinks">
                 <a onclick="navClick(showHome)" id="homeNavLink">Home</a>
                 <a onclick="navClick(showDashboard)" id="dashboardNavLink" style="display:none;"><i class="fas fa-tachometer-alt"></i> <span id="dashboardNavText">Dashboard</span></a>
+                <a id="adminPanelNavLink" href="https://notenest-1-auxz.onrender.com/admin/" target="_blank" style="display:none;"><i class="fas fa-database"></i> Admin DB</a>
                 <a onclick="navClick(showSubjects)">Subjects</a>
                 <a onclick="navClick(showFaculty)">Faculty Info</a>
                 <a onclick="navClick(showQuestions)">Questions</a>
@@ -299,6 +300,8 @@
                             Manage Faculty</a>
                         <a class="sidebar-link" onclick="showAdminTab('users')"><i class="fas fa-user-shield"></i>
                             Users</a>
+                        <a class="sidebar-link" onclick="showAdminTab('noteRequests')"><i class="fas fa-file-upload"></i>
+                            Note Requests</a>
                     </nav>
                 </aside>
                 <main class="dashboard-content">
@@ -306,6 +309,7 @@
                     <div id="adminQuestions" class="dashboard-tab"></div>
                     <div id="adminFaculty" class="dashboard-tab"></div>
                     <div id="adminUsers" class="dashboard-tab"></div>
+                    <div id="adminNoteRequests" class="dashboard-tab"></div>
                 </main>
             </div>
         </div>
@@ -326,12 +330,15 @@
                             Bookmarks</a>
                         <a class="sidebar-link" onclick="showStudentTab('history')"><i class="fas fa-history"></i>
                             History</a>
+                        <a class="sidebar-link" onclick="showStudentTab('noteRequests')"><i class="fas fa-upload"></i>
+                            Upload Notes</a>
                     </nav>
                 </aside>
                 <main class="dashboard-content">
                     <div id="studentProfile" class="dashboard-tab active-tab"></div>
                     <div id="studentBookmarks" class="dashboard-tab"></div>
                     <div id="studentHistory" class="dashboard-tab"></div>
+                    <div id="studentNoteRequests" class="dashboard-tab"></div>
                 </main>
             </div>
         </div>
@@ -430,26 +437,22 @@
                 <p class="auth-message" id="signupMessage"></p>
                 <p class="auth-footer">Already have an account? <a id="switchToLogin">Login here</a></p>
             </form>
-            <form id="forgotPasswordForm" class="auth-form" style="display:none;" onsubmit="event.preventDefault(); getSecurityQuestion();">
-                <h3>Reset Password (Step 1 of 2)</h3>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.2rem;">Enter your email or Student ID to retrieve your security question.</p>
+            <form id="forgotPasswordForm" class="auth-form" style="display:none;" onsubmit="event.preventDefault(); requestResetCode();">
+                <h3>Reset Password</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.2rem;">Enter your email or Student ID to receive a verification code.</p>
                 <div class="form-group">
                     <label>Email / Student ID</label>
                     <input type="text" id="forgotEmail" placeholder="Enter your email or student ID" required>
                 </div>
-                <button type="submit" class="auth-btn"><i class="fas fa-question-circle"></i> Retrieve Question</button>
+                <button type="submit" class="auth-btn"><i class="fas fa-envelope"></i> Send Code</button>
                 <p class="auth-footer"><a href="#" onclick="event.preventDefault(); showLoginForm();">Back to Login</a></p>
             </form>
             <form id="resetPasswordForm" class="auth-form" style="display:none;" onsubmit="event.preventDefault(); handlePasswordReset();">
-                <h3>Reset Password (Step 2 of 2)</h3>
+                <h3>Verify Code</h3>
                 <input type="hidden" id="resetIdentifier">
                 <div class="form-group">
-                    <label>Security Question</label>
-                    <div id="displayQuestion" style="padding: 0.8rem; background: var(--background); border-radius: var(--radius-md); border: 1px solid var(--border); font-weight: 500; font-size: 0.9rem;"></div>
-                </div>
-                <div class="form-group">
-                    <label>Security Answer</label>
-                    <input type="text" id="resetAnswer" placeholder="Enter your answer" required>
+                    <label>Verification Code</label>
+                    <input type="text" id="resetCode" placeholder="Enter the code sent via email" required>
                 </div>
                 <div class="form-group password-group">
                     <label>New Password</label>
